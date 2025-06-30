@@ -36,27 +36,27 @@ all: $(EXE_SERVER_M) $(EXE_SERVER_A) $(EXE_SERVER_B) $(EXE_SERVER_C) $(EXE_CLIEN
 
 # Main Server
 $(EXE_SERVER_M): $(OBJ_SERVER_M)
-	$(CC) $(OBJ_SERVER_M) -o $(EXE_SERVER_M) $(CFLAGS)
+	$(CXX) $(OBJ_SERVER_M) -o $(EXE_SERVER_M) $(CFLAGS)
 
 # Backend Server A
 $(EXE_SERVER_A): $(OBJ_SERVER_A)
-	$(CC) $(OBJ_SERVER_A) -o $(EXE_SERVER_A) $(CFLAGS)
+	$(CXX) $(OBJ_SERVER_A) -o $(EXE_SERVER_A) $(CFLAGS)
 
 # Backend Server B
 $(EXE_SERVER_B): $(OBJ_SERVER_B)
-	$(CC) $(OBJ_SERVER_B) -o $(EXE_SERVER_B) $(CFLAGS)
+	$(CXX) $(OBJ_SERVER_B) -o $(EXE_SERVER_B) $(CFLAGS)
 
 # Backend Server C
 $(EXE_SERVER_C): $(OBJ_SERVER_C)
-	$(CC) $(OBJ_SERVER_C) -o $(EXE_SERVER_C) $(CFLAGS)
+	$(CXX) $(OBJ_SERVER_C) -o $(EXE_SERVER_C) $(CFLAGS)
 
 # Client
 $(EXE_CLIENT): $(OBJ_CLIENT)
-	$(CC) $(OBJ_CLIENT) -o $(EXE_CLIENT) $(CFLAGS)
+	$(CXX) $(OBJ_CLIENT) -o $(EXE_CLIENT) $(CFLAGS)
 
 # Monitor
 $(EXE_MONITOR): $(OBJ_MONITOR)
-	$(CC) $(OBJ_MONITOR) -o $(EXE_MONITOR) $(CFLAGS)
+	$(CXX) $(OBJ_MONITOR) -o $(EXE_MONITOR) $(CFLAGS)
 
 # Clean up object files and Executables
 clean:
