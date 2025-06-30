@@ -117,7 +117,6 @@ char* encrypt_message(char* message){
     encrypted[0] = '\0';
     int i = 0;
     while (message[i]){
-        printf("%c",message[i]);
         char current_letter = message[i];
         int ascii_val = int(current_letter);
         int new_ascii_val = ascii_val; //For non-letter or non-number cases the ascii value remains unchanged. 
@@ -128,7 +127,7 @@ char* encrypt_message(char* message){
         }
         // General approach for all cases: encrypted ascii value -> (current - start + shift) mod total + start
         
-        // Upper case letters
+        // Upper case letters  
         if(ascii_val >= 65 && ascii_val <= 90){
             new_ascii_val = ((ascii_val - 65 + 3)%26) + 65;      
         }
@@ -378,11 +377,9 @@ int send_new_transaction(int serial_num, char *sender, char *receiver, int amoun
 }
 
 void process_transfer_coins(char* sender, char* receiver, int amount, int connfd){
-
     // Get balances and ensure the users exist
     int sender_balance = process_check_wallet(sender, false, true);
     int receiver_balance = process_check_wallet(receiver, true, true);
-
 
     if(sender_balance == -1 && receiver_balance == -1){
         // send to client that no balance
