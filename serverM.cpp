@@ -91,6 +91,10 @@ char* get_client_request(int& connfd, int sockfd, struct sockaddr_in& cli){
     } 
 
     char *buff = (char*)(malloc(1024 * sizeof(char))); 
+    if (buff == nullptr) {
+        perror("Memory allocation failed");
+        return "";  //  if malloc fails
+    }
     // read the message from client and copy it in buffer 
     bzero(buff, 1024);
     read(connfd, buff, 1024); 
@@ -106,6 +110,11 @@ int send_response_to_client(int connfd, char* operation, char* message){
 
 char* encrypt_message(char* message){
     char* encrypted = (char*)malloc(1024 * sizeof(char));
+    if (encrypted == nullptr) {
+        perror("Memory allocation failed");
+        return message;  // Exit or handle appropriately
+    }
+    encrypted[0] = '\0';
     int i = 0;
     while (message[i]){
         printf("%c",message[i]);
@@ -113,7 +122,10 @@ char* encrypt_message(char* message){
         int ascii_val = int(current_letter);
         int new_ascii_val = ascii_val; //For non-letter or non-number cases the ascii value remains unchanged. 
         char* encrypted_letter = (char*)malloc(1 * sizeof(char));
-
+        if (encrypted_letter == nullptr) {
+            perror("Memory allocation failed");
+            return message;  // Exit or handle appropriately
+        }
         // General approach for all cases: encrypted ascii value -> (current - start + shift) mod total + start
         
         // Upper case letters
@@ -142,13 +154,22 @@ char* encrypt_message(char* message){
 
 char* decrypt_message(char* encrypted){
     char* decrypted = (char*)malloc(1024 * sizeof(char));
+    if (decrypted == nullptr) {
+        perror("Memory allocation failed");
+        return encrypted;  // Exit or handle appropriately
+    }
+    decrypted[0] = '\0';
+
     int i = 0;
     while (encrypted[i]){
         char current_letter = encrypted[i];
         int ascii_val = int(current_letter);
         int new_ascii_val = ascii_val; //For non-letter or non-number cases the ascii value remains unchanged. 
         char* decrypted_letter = (char*)malloc(1 * sizeof(char));
-
+        if (decrypted_letter == nullptr) {
+            perror("Memory allocation failed");
+            return encrypted;  // Exit or handle appropriately
+        }
         // General approach for all cases: decrypted ascii value -> (current - start - shift + total) mod total + start 
         
         // Upper case letters
