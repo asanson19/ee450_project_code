@@ -507,7 +507,7 @@ void get_all_transactions() {
 
     std::vector<Transaction> transaction_list;
 
-    FILE* file = fopen("txchain.txt", "a");
+    FILE* file = fopen("txchain.txt", "w");
     if (file == nullptr) {
         perror("Error opening file");
         return;
