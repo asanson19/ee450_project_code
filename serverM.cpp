@@ -102,7 +102,7 @@ char* get_client_request(int& connfd, int sockfd, struct sockaddr_in& cli){
 }
 
 int send_response_to_client(int connfd, char* operation, char* message){
-    // FIX: Create a new buffer instead of modifying the operation parameter
+    // Create a new buffer 
     char response[1024];
     memset(response, 0, sizeof(response));
     strcpy(response, operation);
@@ -452,11 +452,10 @@ struct Transaction {
     char* sender; // Sender of the transaction
     char* receiver; // Receiver of the transaction
     int amount;         // Amount being transferred
-    char* encrypted_message;  // The encrypted transaction message
     
     // Constructor to initialize a transaction
-    Transaction(int serial,  char* sender,  char* receiver, int amount,  char* encrypted_message)
-        : serial_num(serial), sender(sender), receiver(receiver), amount(amount), encrypted_message(encrypted_message) {}
+    Transaction(int serial,  char* sender,  char* receiver, int amount)
+        : serial_num(serial), sender(sender), receiver(receiver), amount(amount) {}
 };
 
 // Function to compare transactions based on their serial number
@@ -468,7 +467,6 @@ void get_all_transactions() {
     char transactions[10000] = "";
     bool found = false;
     int i = 1;
-    // std::vector<Transaction> transaction_list;
     while(true){
         // Server details
         int port_cur = 20000 + i*1000 + 99;
@@ -507,14 +505,53 @@ void get_all_transactions() {
         }
     }
 
-    FILE* file = fopen("txlist.txt", "a");
+    std::vector<Transaction> transaction_list;
+
+    FILE* file = fopen("txchain.txt", "a");
     if (file == nullptr) {
         perror("Error opening file");
         return;
     }
+
     char* decrypted = decrypt_message(transactions);
-    fprintf(file,"%s", decrypted);
-    printf("%s", decrypted);  // FIX: Use %s format specifier
+
+    char* token = strtok(decrypted, "\n");
+
+    while (token != nullptr) {
+        // Parse each transaction line
+        // Format: serial_num sender receiver amount
+        char serial[100];
+        char* sender = (char*)malloc(100);
+        char* receiver = (char*)malloc(100); 
+        int amount;
+        
+        if (sscanf(token, "%99s %99s %99s %d", serial, sender, receiver, &amount) == 4) {
+            char* encrypted_serial = encrypt_message(serial);
+            if (encrypted_serial != nullptr) {  // Check for NULL return
+                transaction_list.emplace_back(atoi(encrypted_serial), sender, receiver, amount);
+                free(encrypted_serial);  // Free the returned string if needed
+            }
+            else {
+                free(sender);
+                free(receiver);
+            }
+        }
+        else {
+            // Failed to parse, free allocated memory
+            free(sender);
+            free(receiver);
+        }
+            
+        token = strtok(nullptr, "\n");
+    }
+
+    // Sort transactions by serial number
+    std::sort(transaction_list.begin(), transaction_list.end(), compare_transactions);
+
+    // Write sorted transactions to file
+    for (const auto& trans : transaction_list) {
+        fprintf(file, "%d %s %s %d\n", trans.serial_num, trans.sender, trans.receiver, trans.amount);
+    }
     free(decrypted);
     fclose(file);
 }
