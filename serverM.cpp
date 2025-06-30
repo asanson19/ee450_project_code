@@ -11,8 +11,9 @@
 #include <cstring>  // For strtok
 #include <string>
 #include <random>
-
-
+#include <algorithm>  // For sorting
+#include <cstdlib>    // For atoi
+#include <fstream>
 //UDP Port
 #define PORT_UDP 24099 //Port# is 24000 + last 3 digits of student_id (2336080_099_) -> 24099
 //TCP Port with client
@@ -173,7 +174,6 @@ char* decrypt_message(char* encrypted){
     
 }
 
-
 int process_check_wallet(char* username, bool suppress_messages=false, bool transfer=false){
     // encrypt username
     char* encrypted_username = encrypt_message(username);
@@ -297,8 +297,6 @@ int get_max_serial_num(){
     return max_num;
 }
 
-
-
 int send_new_transaction(int serial_num, char *sender, char *receiver, int amount, int random_server){
     char* message = (char*)malloc(1024 * sizeof(char));  // Allocate enough memory
     if (message == nullptr) {
@@ -358,7 +356,6 @@ int send_new_transaction(int serial_num, char *sender, char *receiver, int amoun
     return status_code;
 }
 
-
 void process_transfer_coins(char* sender, char* receiver, int amount, int connfd){
 
     // Get balances and ensure the users exist
@@ -416,6 +413,74 @@ void process_transfer_coins(char* sender, char* receiver, int amount, int connfd
 }
 
 
+struct Transaction {
+    int serial_num;     // Serial number of the transaction
+    char* sender; // Sender of the transaction
+    char* receiver; // Receiver of the transaction
+    int amount;         // Amount being transferred
+    char* encrypted_message;  // The encrypted transaction message
+    
+    // Constructor to initialize a transaction
+    Transaction(int serial,  char* sender,  char* receiver, int amount,  char* encrypted_message)
+        : serial_num(serial), sender(sender), receiver(receiver), amount(amount), encrypted_message(encrypted_message) {}
+};
+
+// Function to compare transactions based on their serial number
+bool compare_transactions(const Transaction& t1, const Transaction& t2) {
+    return t1.serial_num < t2.serial_num;
+}
+
+void get_all_transactions() {
+    char transactions[10000] = "";
+    bool found = false;
+    int i = 1;
+    // std::vector<Transaction> transaction_list;
+    while(true){
+        // Server details
+        int port_cur = 20000 + i*1000 + 99;
+        udp_server_addr.sin_family = AF_INET;
+        udp_server_addr.sin_port = htons(port_cur);
+        udp_server_addr.sin_addr.s_addr = INADDR_ANY;
+
+        // Construct message
+        char operation[150] = "txlist ";
+
+        // Send the UDP request to the server
+        sendto(udp_sockfd, (const char *)operation, 150, 
+             0, (const struct sockaddr *) &udp_server_addr,  
+                 sizeof(udp_server_addr)); 
+
+        char server_name = (char)64+i;
+
+        // Get Response from server
+        char buffer[MAXLINE*10]; 
+        socklen_t len; 
+        int n = recvfrom(udp_sockfd, (char *)buffer, MAXLINE,  
+                MSG_WAITALL, (struct sockaddr *) &udp_server_addr, 
+                &len); 
+        buffer[n] = '\0'; 
+
+        //  Store valid response in the transactions buffer
+        if(strcmp(buffer,"none") != 0){
+            strcat(transactions, buffer);
+            strcat(transactions, " ");
+            found = true;
+        }
+
+        i++;
+        if(i==4){  // Stop after sending requests to all 3 servers
+            break;
+        }
+    }
+
+    FILE* file = fopen("txlist.txt", "a");
+    if (file == nullptr) {
+        perror("Error opening file");
+        return;
+    }
+    fprintf(file,"%s", decrypt_message(transactions));
+    printf(decrypt_message(transactions));
+}
 
 int main(){
     /* PHASE 1: 
@@ -423,7 +488,6 @@ int main(){
         b). Connect client to the main server (Server-M). -> Connection Type: TCP
         c). Connect monitor to the main server (Server-M). -> Connection Type: TCP
     */
-
 
     if(create_and_bind_udp(udp_sockfd, udp_server_addr, udp_client_addr) < 0) {
         exit(EXIT_FAILURE);
@@ -438,39 +502,78 @@ int main(){
     }
 
     printf("The main server is up and running.\n\n");
+     /* PHASE 2: 
+         Check wallet and Transfer coin operations
+    */
+    fd_set readfds;
+    int max_sd = std::max(tcp_cl_socket_fd, tcp_mt_socket_fd);
+
     while(true){
-        // Accept the data packet from client and verification 
-        struct sockaddr_in cli;
-        socklen_t len = sizeof(cli);
-        int connfd = accept(tcp_cl_socket_fd, (sockaddr*)&cli, &len); 
+        // Clear the socket set
+        FD_ZERO(&readfds);
 
-        char* message = get_client_request(connfd, tcp_cl_socket_fd, cli);
+        // Add client and monitor sockets to the set
+        FD_SET(tcp_cl_socket_fd, &readfds);
+        FD_SET(tcp_mt_socket_fd, &readfds);
 
-        // figure out operation type and display message
-        char* operation = strtok(message, " ");  // First token is the operation
+        // Check for activity on the sockets
+        int activity = select(max_sd + 1, &readfds, nullptr, nullptr, nullptr);
 
-        if (strcmp(operation, "check_wallet") == 0) {
-            // Handle check_wallet operation
-            char* username = strtok(nullptr, " ");  // Get the next token (username)
-            printf("The main server received input=%s from the client using TCP over %d\n\n", username, PORT_CLIENT);
-            
-            int balance = process_check_wallet(username);
-            char operation[1024] = "check_wallet ";
-            char message[100];
-            snprintf(message, 100, "%d", balance);
-            send_response_to_client(connfd, operation, message);
-            printf("The main server sent the current balance to the client.\n\n");
-        } else {
-            // Handle txcoins operation
-            char* sender = strtok(nullptr, " ");  // Get sender's username
-            char* receiver = strtok(nullptr, " ");  // Get receiver's username
-            int amount = atoi(strtok(nullptr, " "));  // Get amount to transfer
-            printf("The main server received from %s to transfer %d coins to %s using TCP over %d\n\n", sender, amount, receiver, PORT_CLIENT);
-            
-            process_transfer_coins(sender, receiver, amount, connfd);
-            printf("The main server sent the result of the transaction to the client. \n\n");
+        if (activity < 0) {
+            perror("select error");
+            continue;
         }
-            
+
+        // Accept the data packet from client and verification 
+        if (FD_ISSET(tcp_cl_socket_fd, &readfds)) {
+
+            struct sockaddr_in cli;
+            socklen_t len = sizeof(cli);
+            int connfd = accept(tcp_cl_socket_fd, (sockaddr*)&cli, &len); 
+            if (connfd >=0){
+                char* message = get_client_request(connfd, tcp_cl_socket_fd, cli);
+                // figure out operation type and display message
+                char* operation = strtok(message, " ");  // First token is the operation
+
+                if (strcmp(operation, "check_wallet") == 0) {
+                    // Handle check_wallet operation
+                    char* username = strtok(nullptr, " ");  // Get the next token (username)
+                    printf("The main server received input=%s from the client using TCP over %d\n\n", username, PORT_CLIENT);
+                    
+                    int balance = process_check_wallet(username);
+                    char operation[1024] = "check_wallet ";
+                    char message[100];
+                    snprintf(message, 100, "%d", balance);
+                    send_response_to_client(connfd, operation, message);
+                    printf("The main server sent the current balance to the client.\n\n");
+                } else {
+                    // Handle txcoins operation
+                    char* sender = strtok(nullptr, " ");  // Get sender's username
+                    char* receiver = strtok(nullptr, " ");  // Get receiver's username
+                    int amount = atoi(strtok(nullptr, " "));  // Get amount to transfer
+                    printf("The main server received from %s to transfer %d coins to %s using TCP over %d\n\n", sender, amount, receiver, PORT_CLIENT);
+                    
+                    process_transfer_coins(sender, receiver, amount, connfd);
+                    printf("The main server sent the result of the transaction to the client. \n\n");
+                }
+            }
+        }
+        if (FD_ISSET(tcp_mt_socket_fd, &readfds)) {
+            struct sockaddr_in cli_monitor;
+            socklen_t len_monitor = sizeof(cli_monitor);
+            int connfd_monitor = accept(tcp_mt_socket_fd, (sockaddr*)&cli_monitor, &len_monitor); 
+            if (connfd_monitor < 0) continue;
+
+            char* message_monitor = get_client_request(connfd_monitor, tcp_mt_socket_fd, cli_monitor);
+            char* operation = strtok(message_monitor, " "); 
+
+            if(strcmp(operation, "txlist") == 0) {
+                printf("The main server received a sorted list request from the monitor using TCP over port %d\n\n", PORT_MONITOR);
+                get_all_transactions();
+            }else{
+                printf("Invalid operation received from monitor\n");
+            }
+        }
     }
     
     close(tcp_cl_socket_fd);

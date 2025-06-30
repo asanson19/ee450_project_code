@@ -93,6 +93,30 @@ void add_transaction(char* transaction_info, int sockfd, struct sockaddr_in &cli
     sendto(sockfd, buffer, strlen(buffer), 0, (const struct sockaddr*)&cliaddr, len);
 }
 
+void send_all_transactions(int sockfd, struct sockaddr_in &cliaddr, socklen_t len){
+    FILE* file = fopen(BLOCK_FILE, "r");
+    if (file == nullptr) {
+        perror("Error opening file");
+        return;
+    }
+
+    char buffer[MAXLINE*10] = "\n";  // Initialize buffer with zeros
+    char line[MAXLINE];  // To store each line from the file
+
+    // Read the file line by line
+    while (fgets(line, sizeof(line), file)) {
+        // Check if the username is present in the line
+        strcat(buffer, line);
+        strcat(buffer, "\n");
+    }
+
+    if(strcmp(buffer, "") == 0){
+        char* mess = "none";
+        strcat(buffer, mess);
+    }
+    sendto(sockfd, buffer, strlen(buffer), 0, (const struct sockaddr*)&cliaddr, len);
+}
+
 
 int main(){
      /* PHASE 1: 
@@ -159,8 +183,10 @@ int main(){
                 strcat(transaction_info, token);  // Add token (receiver or amount)
             }
             add_transaction(transaction_info, sockfd, cliaddr, len);
+        }else if(operation != nullptr && strcmp(operation, "txlist") == 0) {
+            send_all_transactions(sockfd, cliaddr, len);
         }else{
-            printf("Invalid operation or unsupported request.\n\n");
+            printf("Invalid operation or unsupported request: %s\n\n", operation);
         }
     }
     

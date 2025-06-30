@@ -1,7 +1,7 @@
 # Compiler info
 CXX = g++  # Use g++ for C++ code
 CXXFLAGS = -Wall -g -std=c++11  # Enable all warnings, debugging, and use C++11 standard
-LDFLAGS = -stdlib=libc++  # Link against the C++ standard library
+LDFLAGS = -lstdc++   # Link against the C++ standard library
 ARCH_FLAGS = -arch arm64  # For Apple M1/M2 chips (only needed on macOS)
 
 
