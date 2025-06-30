@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -93,7 +92,7 @@ char* get_client_request(int& connfd, int sockfd, struct sockaddr_in& cli){
     char *buff = (char*)(malloc(1024 * sizeof(char))); 
     if (buff == nullptr) {
         perror("Memory allocation failed");
-        return "";  //  if malloc fails
+        return NULL;  // Return NULL instead of ""
     }
     // read the message from client and copy it in buffer 
     bzero(buff, 1024);
@@ -103,8 +102,12 @@ char* get_client_request(int& connfd, int sockfd, struct sockaddr_in& cli){
 }
 
 int send_response_to_client(int connfd, char* operation, char* message){
-    strcat(operation, message);
-    write(connfd, operation, 100); 
+    // FIX: Create a new buffer instead of modifying the operation parameter
+    char response[1024];
+    memset(response, 0, sizeof(response));
+    strcpy(response, operation);
+    strcat(response, message);
+    write(connfd, response, strlen(response)); 
     return 0;
 }
 
@@ -120,11 +123,9 @@ char* encrypt_message(char* message){
         char current_letter = message[i];
         int ascii_val = int(current_letter);
         int new_ascii_val = ascii_val; //For non-letter or non-number cases the ascii value remains unchanged. 
-        char* encrypted_letter = (char*)malloc(1 * sizeof(char));
-        if (encrypted_letter == nullptr) {
-            perror("Memory allocation failed");
-            return message;  // Exit or handle appropriately
-        }
+        // FIX: Use a stack buffer instead of malloc for single character
+        char encrypted_letter[2] = {0};  // 2 bytes: 1 for char, 1 for null terminator
+        
         // General approach for all cases: encrypted ascii value -> (current - start + shift) mod total + start
         
         // Upper case letters  
@@ -164,11 +165,9 @@ char* decrypt_message(char* encrypted){
         char current_letter = encrypted[i];
         int ascii_val = int(current_letter);
         int new_ascii_val = ascii_val; //For non-letter or non-number cases the ascii value remains unchanged. 
-        char* decrypted_letter = (char*)malloc(1 * sizeof(char));
-        if (decrypted_letter == nullptr) {
-            perror("Memory allocation failed");
-            return encrypted;  // Exit or handle appropriately
-        }
+        // FIX: Use a stack buffer instead of malloc for single character
+        char decrypted_letter[2] = {0};  // 2 bytes: 1 for char, 1 for null terminator
+        
         // General approach for all cases: decrypted ascii value -> (current - start - shift + total) mod total + start 
         
         // Upper case letters
@@ -249,6 +248,9 @@ int process_check_wallet(char* username, bool suppress_messages=false, bool tran
         }
     }
 
+    // Free the encrypted username
+    free(encrypted_username);
+
     // If no transaction data was found, return -1
     if (!found) {
         return -1;
@@ -256,12 +258,20 @@ int process_check_wallet(char* username, bool suppress_messages=false, bool tran
 
     // Start with the initial balance of 1000 txcoins
     int balance = 1000;
-    char* serial_num = strtok(transactions, " ");
+    char transactions_copy[10000];
+    strcpy(transactions_copy, transactions);  // FIX: Make a copy to preserve original
+    char* serial_num = strtok(transactions_copy, " ");
     while(serial_num != NULL){
-        char* sender = decrypt_message(strtok(NULL, " "));
-        char* receiver = decrypt_message(strtok(NULL, " "));
-        char* amount_str = decrypt_message(strtok(NULL, " "));
-        if (receiver != NULL && amount_str != NULL) {
+        char* sender_enc = strtok(NULL, " ");
+        char* receiver_enc = strtok(NULL, " ");
+        char* amount_enc = strtok(NULL, " ");
+        
+        // FIX: Check for NULL before decrypting
+        if (sender_enc != NULL && receiver_enc != NULL && amount_enc != NULL) {
+            char* sender = decrypt_message(sender_enc);
+            char* receiver = decrypt_message(receiver_enc);
+            char* amount_str = decrypt_message(amount_enc);
+            
             int amount = atoi(amount_str);  // Convert the amount to integer
             if (strcmp(sender, username) == 0) {
                 // If the user is the sender, subtract the amount from the balance
@@ -271,6 +281,11 @@ int process_check_wallet(char* username, bool suppress_messages=false, bool tran
                 // If the user is the receiver, add the amount to the balance
                 balance += amount;
             }
+            
+            // Free decrypted strings
+            free(sender);
+            free(receiver);
+            free(amount_str);
         }
         serial_num = strtok(NULL, " ");
     }
@@ -348,6 +363,7 @@ int send_new_transaction(int serial_num, char *sender, char *receiver, int amoun
 
     // Free dynamically allocated memory
     free(message);
+    free(encrypted_message);
 
     // Server details
     int port_cur = 20000 + random_server*1000 + 99;
@@ -356,11 +372,11 @@ int send_new_transaction(int serial_num, char *sender, char *receiver, int amoun
     udp_server_addr.sin_addr.s_addr = INADDR_ANY;
 
     // Construct message
-    char operation[150] = "add_transaction ";
+    char operation[2048] = "add_transaction ";  // FIX: Increased buffer size
     strcat(operation, final_message);
 
     // Send the UDP request to the server
-    sendto(udp_sockfd, (const char *)operation, 150, 
+    sendto(udp_sockfd, (const char *)operation, strlen(operation), 
             0, (const struct sockaddr *) &udp_server_addr,  
                 sizeof(udp_server_addr)); 
 
@@ -496,8 +512,11 @@ void get_all_transactions() {
         perror("Error opening file");
         return;
     }
-    fprintf(file,"%s", decrypt_message(transactions));
-    printf(decrypt_message(transactions));
+    char* decrypted = decrypt_message(transactions);
+    fprintf(file,"%s", decrypted);
+    printf("%s", decrypted);  // FIX: Use %s format specifier
+    free(decrypted);
+    fclose(file);
 }
 
 int main(){
@@ -550,32 +569,54 @@ int main(){
             int connfd = accept(tcp_cl_socket_fd, (sockaddr*)&cli, &len); 
             if (connfd >=0){
                 char* message = get_client_request(connfd, tcp_cl_socket_fd, cli);
+                if (message == NULL) {
+                    close(connfd);
+                    continue;
+                }
+                
+                //Make a copy of the message before using strtok
+                char message_copy[1024];
+                strncpy(message_copy, message, sizeof(message_copy) - 1);
+                message_copy[sizeof(message_copy) - 1] = '\0';
+                
                 // figure out operation type and display message
-                char* operation = strtok(message, " ");  // First token is the operation
+                char* operation = strtok(message_copy, " ");  // First token is the operation
 
-                if (strcmp(operation, "check_wallet") == 0) {
+                if (operation != NULL && strcmp(operation, "check_wallet") == 0) {
                     // Handle check_wallet operation
                     char* username = strtok(nullptr, " ");  // Get the next token (username)
-                    printf("The main server received input=%s from the client using TCP over %d\n\n", username, PORT_CLIENT);
-                    
-                    int balance = process_check_wallet(username);
-                    char operation[1024] = "check_wallet ";
-                    char message[100];
-                    snprintf(message, 100, "%d", balance);
-                    send_response_to_client(connfd, operation, message);
-                    printf("The main server sent the current balance to the client.\n\n");
-                } else {
+                    if (username != NULL) {
+                        printf("The main server received input=%s from the client using TCP over %d\n\n", username, PORT_CLIENT);
+                        
+                        int balance = process_check_wallet(username);
+                        char operation[1024] = "check_wallet ";
+                        char message[100];
+                        snprintf(message, 100, "%d", balance);
+                        send_response_to_client(connfd, operation, message);
+                        printf("The main server sent the current balance to the client.\n\n");
+                    }
+                } else if (operation != NULL) {
                     // Handle txcoins operation
                     char* sender = strtok(nullptr, " ");  // Get sender's username
                     char* receiver = strtok(nullptr, " ");  // Get receiver's username
-                    int amount = atoi(strtok(nullptr, " "));  // Get amount to transfer
-                    printf("The main server received from %s to transfer %d coins to %s using TCP over %d\n\n", sender, amount, receiver, PORT_CLIENT);
+                    char* amount_str = strtok(nullptr, " ");  // Get amount
                     
-                    process_transfer_coins(sender, receiver, amount, connfd);
-                    printf("The main server sent the result of the transaction to the client. \n\n");
+                    if (sender != NULL && receiver != NULL && amount_str != NULL) {
+                        int amount = atoi(amount_str);  // Get amount to transfer
+                        printf("The main server received from %s to transfer %d coins to %s using TCP over %d\n\n", sender, amount, receiver, PORT_CLIENT);
+                        
+                        process_transfer_coins(sender, receiver, amount, connfd);
+                        printf("The main server sent the result of the transaction to the client. \n\n");
+                    }
                 }
+                free(message);  // Free the allocated message
+                close(connfd);
             }
         }
+
+        /* PHASE 3: 
+         Transaction list operation
+        */
         if (FD_ISSET(tcp_mt_socket_fd, &readfds)) {
             struct sockaddr_in cli_monitor;
             socklen_t len_monitor = sizeof(cli_monitor);
@@ -583,14 +624,21 @@ int main(){
             if (connfd_monitor < 0) continue;
 
             char* message_monitor = get_client_request(connfd_monitor, tcp_mt_socket_fd, cli_monitor);
+            if (message_monitor == NULL) {
+                close(connfd_monitor);
+                continue;
+            }
+            
             char* operation = strtok(message_monitor, " "); 
 
-            if(strcmp(operation, "txlist") == 0) {
+            if(operation != NULL && strcmp(operation, "txlist") == 0) {
                 printf("The main server received a sorted list request from the monitor using TCP over port %d\n\n", PORT_MONITOR);
                 get_all_transactions();
             }else{
                 printf("Invalid operation received from monitor\n");
             }
+            free(message_monitor);  // Free the allocated message
+            close(connfd_monitor);
         }
     }
     
