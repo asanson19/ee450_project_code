@@ -51,7 +51,7 @@ int main(int argc, char* argv[]){
     
 
     char message[1024] = "";
-    
+
     // std::stringstream ss;
 
     if(argc == 2){
@@ -75,9 +75,9 @@ int main(int argc, char* argv[]){
         }
         int amount = atoi(strtok(nullptr, " "));
         if(amount <0){
-            printf("%s is not a part of the network.", username);
+            printf("%s is not a part of the network.\n", username);
         }else{
-            printf("The current balance of %s is: %d txcoins", username, amount);
+            printf("The current balance of %s is: %d txcoins\n", username, amount);
         }
     }
     else{
@@ -105,16 +105,16 @@ int main(int argc, char* argv[]){
         if(strcmp(status, "insufficient_funds")==0){
             char* balance = strtok(nullptr, " ");
             printf("%s was unable to transfer %s txcoins to %s because of insufficient balance ."
-                    "\n\nThe current balance of %s is %s txcoins.", 
+                    "\n\nThe current balance of %s is %s txcoins.\n", 
                     sender_username, transaction_amount, receiver_username, sender_username, balance);
         }else if(strcmp(status, "one_no_exist")==0){
             char* non_existing_user = strtok(nullptr, " ");
-            printf("Unable to proceed with the transaction as %s is not part of the network.", non_existing_user);
+            printf("Unable to proceed with the transaction as %s is not part of the network.\n", non_existing_user);
         }else if(strcmp(status, "both_no_exist")==0){
-            printf("Unable to proceed with the transaction as %s and %s are not part of the network.", sender_username, receiver_username);
+            printf("Unable to proceed with the transaction as %s and %s are not part of the network.\n", sender_username, receiver_username);
         }else if(strcmp(status, "success")==0){
             char* sender_balance = strtok(nullptr, " ");
-            printf("%s successfully transferred %s txcoins to %s. \n\nThe current balance of %s is : %s txcoins.", sender_username, transaction_amount, receiver_username, sender_username, sender_balance);
+            printf("%s successfully transferred %s txcoins to %s. \n\nThe current balance of %s is : %s txcoins.\n", sender_username, transaction_amount, receiver_username, sender_username, sender_balance);
         }
     }
     

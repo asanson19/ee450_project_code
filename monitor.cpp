@@ -16,9 +16,8 @@
 int main(int argc, char* argv[]){
     // Set up monitor TCP connection -> Reference: "Sample Client Code" from geeksforgeeks provided in Brightspace.
 
-    int sockfd = 0, valread;
+    int sockfd = 0;
     struct sockaddr_in serv_addr;
-    char buffer[1024] = {0};
     
     if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0){
         printf("\n Socket creation error \n");

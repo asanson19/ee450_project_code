@@ -465,7 +465,6 @@ bool compare_transactions(const Transaction& t1, const Transaction& t2) {
 
 void get_all_transactions() {
     char transactions[10000] = "";
-    bool found = false;
     int i = 1;
     while(true){
         // Server details
@@ -482,8 +481,6 @@ void get_all_transactions() {
              0, (const struct sockaddr *) &udp_server_addr,  
                  sizeof(udp_server_addr)); 
 
-        char server_name = (char)64+i;
-
         // Get Response from server
         char buffer[MAXLINE*10]; 
         socklen_t len; 
@@ -496,7 +493,6 @@ void get_all_transactions() {
         if(strcmp(buffer,"none") != 0){
             strcat(transactions, buffer);
             strcat(transactions, " ");
-            found = true;
         }
 
         i++;
