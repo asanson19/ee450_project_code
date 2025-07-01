@@ -384,7 +384,6 @@ char* decrypt_message_advanced(char* encrypted){
 
 char* encrypt_message(char* message){
     if(use_advanced_encryption){
-        printf("sending to advanced encrypt: %s\n\n", message);
         return encrypt_message_advanced(message);
     }
     char* encrypted = (char*)malloc(1024 * sizeof(char));
