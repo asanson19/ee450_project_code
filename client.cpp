@@ -107,9 +107,10 @@ int main(int argc, char* argv[]){
             printf("%s was unable to transfer %s txcoins to %s because of insufficient balance ."
                     "\n\nThe current balance of %s is %s txcoins.\n", 
                     sender_username, transaction_amount, receiver_username, sender_username, balance);
-        }else if(strcmp(status, "one_no_exist")==0){
-            char* non_existing_user = strtok(nullptr, " ");
-            printf("Unable to proceed with the transaction as %s is not part of the network.\n", non_existing_user);
+        }else if(strcmp(status, "sender_no_exist")==0){
+            printf("Unable to proceed with the transaction as %s is not part of the network.\n", sender_username);
+        }else if(strcmp(status, "receiver_no_exist")==0){
+            printf("Unable to proceed with the transaction as %s is not part of the network.\n", receiver_username);
         }else if(strcmp(status, "both_no_exist")==0){
             printf("Unable to proceed with the transaction as %s and %s are not part of the network.\n", sender_username, receiver_username);
         }else if(strcmp(status, "success")==0){

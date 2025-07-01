@@ -1,5 +1,4 @@
 /* PHASE 1: 
-    a). Connect client to the main server (Server-M). -> Connection Type: TCP
     b). Connect monitor to the main server (Server-M). -> Connection Type: TCP
     c). Boot up all 4 servers (Server-M, -A, -B, and -C).
 */
@@ -49,9 +48,15 @@ int main(int argc, char* argv[]){
         // send request 
         write(sockfd, message, strlen(message));
         printf("Monitor sent a sorted list request to the main server. \n\n");
-
         // check if txchain.txt is generated
-        printf("Successfully received a sorted list of transactions from the main server.\n");
+        
+        char response[1024];
+        read(sockfd, response, 1024);
+        if(strcmp(response,"0")){
+            printf("Successfully received a sorted list of transactions from the main server.\n");
+        }else{
+            printf("Something went wrong.\n");
+        }
     }
     
     close(sockfd);

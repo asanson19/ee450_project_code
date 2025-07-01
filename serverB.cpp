@@ -34,20 +34,27 @@ void check_wallet(int sockfd, struct sockaddr_in &cliaddr, socklen_t len, const 
     char buffer[MAXLINE*10] = "";  // Initialize buffer with zeros
     char line[MAXLINE];  // To store each line from the file
 
+    char* username_full = (char*)malloc((strlen(username) +2) * sizeof(char));
+    strcat(username_full, username);
+    strcat(username_full, " ");
     // Read the file line by line
+
     while (fgets(line, sizeof(line), file)) {
         // Check if the username is present in the line
-        if (strstr(line, username) != nullptr) {
+        if (strstr(line, username_full) != nullptr) {
             // Append the line to the buffer if the username is found
             strcat(buffer, line);
             strcat(buffer, " ");
         }
     }
 
+
     if(strcmp(buffer, "") == 0){
         char* mess = "none";
         strcat(buffer, mess);
     }
+    // printf("buffer: %s\n", buffer);
+
     sendto(sockfd, buffer, strlen(buffer), 0, (const struct sockaddr*)&cliaddr, len);
     printf("The ServerB finished sending the response to the Main Server.\n\n");
 

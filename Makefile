@@ -12,6 +12,7 @@ EXE_SERVER_B = serverB
 EXE_SERVER_C = serverC
 EXE_CLIENT = client
 EXE_MONITOR = monitor
+EXE_ADVANCED_ENCRYPTION = advanced_encryption
 
 # Source Files
 SRC_SERVER_M = serverM.cpp
@@ -20,7 +21,7 @@ SRC_SERVER_B = serverB.cpp
 SRC_SERVER_C = serverC.cpp
 SRC_CLIENT = client.cpp
 SRC_MONITOR = monitor.cpp
-
+SRC_ADVANCED_ENCRYPTION = advanced_encryption.cpp
 
 # Object Files
 OBJ_SERVER_M = $(SRC_SERVER_M:.cpp=.o)
@@ -29,10 +30,15 @@ OBJ_SERVER_B = $(SRC_SERVER_B:.cpp=.o)
 OBJ_SERVER_C = $(SRC_SERVER_C:.cpp=.o)
 OBJ_CLIENT = $(SRC_CLIENT:.cpp=.o)
 OBJ_MONITOR = $(SRC_MONITOR:.cpp=.o)
+OBJ_ADVANCED_ENCRYPTION = $(SRC_ADVANCED_ENCRYPTION:.cpp=.o)
 
 
 # Default target
 all: $(EXE_SERVER_M) $(EXE_SERVER_A) $(EXE_SERVER_B) $(EXE_SERVER_C) $(EXE_CLIENT) $(EXE_MONITOR)
+
+# Extra
+extra: $(EXE_ADVANCED_ENCRYPTION)
+
 
 # Main Server
 $(EXE_SERVER_M): $(OBJ_SERVER_M)
@@ -58,12 +64,17 @@ $(EXE_CLIENT): $(OBJ_CLIENT)
 $(EXE_MONITOR): $(OBJ_MONITOR)
 	$(CXX) $(OBJ_MONITOR) -o $(EXE_MONITOR) $(CFLAGS)
 
+# Advanced encryption
+$(EXE_ADVANCED_ENCRYPTION): $(OBJ_ADVANCED_ENCRYPTION)
+	$(CXX) $(OBJ_ADVANCED_ENCRYPTION) -o $(SRC_ADVANCED_ENCRYPTION) $(CFLAGS)
+
 # Clean up object files and Executables
 clean:
 	rm -f $(OBJ_SERVER_M) $(OBJ_SERVER_A) $(OBJ_SERVER_B) $(OBJ_SERVER_C) $(OBJ_CLIENT) $(OBJ_MONITOR) $(EXE_SERVER_M) $(EXE_SERVER_A) $(EXE_SERVER_B) $(EXE_SERVER_C) $(EXE_CLIENT) $(EXE_MONITOR)
 
 # Rebuild the project
 rebuild: clean all
+
 
 # Run the servers and client/monitor for testing 
 run: $(EXE_SERVER_M) $(EXE_SERVER_A) $(EXE_SERVER_B) $(EXE_SERVER_C)
