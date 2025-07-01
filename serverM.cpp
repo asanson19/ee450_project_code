@@ -490,7 +490,7 @@ int process_check_wallet(char* username, bool suppress_messages=false, bool tran
         strcat(operation, encrypted_username);
 
         // Send the UDP request to the server
-        sendto(udp_sockfd, (const char *)operation, 150, 
+        sendto(udp_sockfd, (const char *)operation, strlen(operation), 
              0, (const struct sockaddr *) &udp_server_addr,  
                  sizeof(udp_server_addr)); 
 
@@ -584,7 +584,7 @@ int get_max_serial_num(){
         char operation[150] = "check_serial_num ";
 
         // Send the UDP request to the server
-        sendto(udp_sockfd, (const char *)operation, 150, 
+        sendto(udp_sockfd, (const char *)operation, strlen(operation), 
              0, (const struct sockaddr *) &udp_server_addr,  
                  sizeof(udp_server_addr)); 
 
@@ -721,6 +721,7 @@ void process_transfer_coins(char* sender, char* receiver, int amount, int connfd
         int sender_balance_new = process_check_wallet(sender, true, true);
         char status_code[1024] = "success ";
         char message[100];
+        
         snprintf(message, 100, "%d%c", sender_balance_new, '\0');
         send_response_to_client(connfd, status_code, message);
     }
@@ -757,7 +758,7 @@ int get_all_transactions() {
         char operation[150] = "txlist ";
 
         // Send the UDP request to the server
-        sendto(udp_sockfd, (const char *)operation, 150, 
+        sendto(udp_sockfd, (const char *)operation, strlen(operation), 
              0, (const struct sockaddr *) &udp_server_addr,  
                  sizeof(udp_server_addr)); 
 

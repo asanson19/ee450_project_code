@@ -67,7 +67,14 @@ int main(int argc, char* argv[]){
 
         char response[1024];
         // bzero(response, sizeof(response));
-        read(sockfd, response, 100);
+        
+        int n = read(sockfd, response, sizeof(response)-1);   // <- capture length
+        if (n <= 0) { 
+            printf("An error has occurred");
+            exit(EXIT_FAILURE);
+        }
+        response[n] = '\0';         
+
         char* operation = strtok(response, " ");
         if(strcmp(operation, "check_wallet")!=0){
             printf("An error has occurred");
@@ -98,7 +105,13 @@ int main(int argc, char* argv[]){
         
         // Get response
         char response[1024];
-        read(sockfd, response, 1024);
+        int n = read(sockfd, response, sizeof(response)-1);   // <- capture length
+        if (n <= 0) { 
+            printf("An error has occurred");
+            exit(EXIT_FAILURE);
+        }
+        response[n] = '\0';         
+        
         char* status = strtok(response, " ");
 
         // Display appropriate message
