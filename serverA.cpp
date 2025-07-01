@@ -28,6 +28,7 @@ void check_wallet(int sockfd, struct sockaddr_in &cliaddr, socklen_t len, const 
     char line[MAXLINE];  // To store each line from the file
 
     char* username_full = (char*)malloc((strlen(username) +2) * sizeof(char));
+    username_full[0] = '\0';
     strcat(username_full, username);
     strcat(username_full, " ");
     // Read the file line by line
@@ -102,9 +103,12 @@ void send_all_transactions(int sockfd, struct sockaddr_in &cliaddr, socklen_t le
 
     // Read the file line by line
     while (fgets(line, sizeof(line), file)) {
-        // Check if the username is present in the line
-        strcat(buffer, line);
-        strcat(buffer, "\n");
+        if (strlen(buffer) + strlen(line) + 2 < sizeof(buffer)) {
+            strcat(buffer, line);
+            strcat(buffer, "\n");
+        } else {
+            break; // prevent overflow
+        }        
     }
 
     if(strcmp(buffer, "") == 0){
@@ -167,7 +171,7 @@ int main(){
             // If the operation is "check_wallet", check the user's wallet
             send_max_serial_num(sockfd, cliaddr, len);
         }else if(operation != nullptr && strcmp(operation, "add_transaction") == 0) {
-            char* transaction_info = (char*)malloc(1024 * sizeof(char)); 
+            char* transaction_info = (char*)malloc(MAXLINE * 1000 * sizeof(char)); 
             transaction_info[0] = '\0';  // Initialize to empty string
             // Get the first token (sender)
             char* token = strtok(nullptr, " ");
@@ -179,6 +183,7 @@ int main(){
                 strcat(transaction_info, token);  // Add token (receiver or amount)
             }
             add_transaction(transaction_info, sockfd, cliaddr, len);
+            free(transaction_info);
         }else if(operation != nullptr && strcmp(operation, "txlist") == 0) {
             send_all_transactions(sockfd, cliaddr, len);
         }else{
