@@ -119,6 +119,7 @@ int send_response_to_client(int connfd, char* operation, char* message){
 
 char* number_to_ascii(char* numerated_message){
     char* encrypted = (char *)  malloc(strlen(numerated_message)*4*sizeof(char)); 
+    encrypted[0] = '\0';
     int i = 0;
     while (numerated_message[i]){
         char current_letter = numerated_message[i];
@@ -141,7 +142,7 @@ char* number_to_ascii(char* numerated_message){
 
 char* ascii_to_num(char* ascii_message){
     char* decrypted = (char *)  malloc(strlen(ascii_message)*4*sizeof(char)); 
-
+    decrypted[0] = '\0';
     int i = 0;
     while (ascii_message[i]){
         char current_letter = ascii_message[i];
@@ -174,6 +175,7 @@ char* ascii_to_num(char* ascii_message){
 char* encrypt_message_advanced(char* message){
 
     char* current_encrypted = (char *)  malloc(strlen(message)*20*sizeof(char)); 
+    current_encrypted[0] = '\0';
     int i = 0;
 
     // Step 1: iterate through message, change to len+ascii of each letter -> new_message
@@ -212,7 +214,7 @@ char* encrypt_message_advanced(char* message){
     // Step 3 (repeat): new_message -> convert each number's char to ascii
     char* encrypted_thrice = number_to_ascii(encrypted_twice);
     // printf("step 3: %s \n",encrypted_thrice);
-
+    free(encrypted_twice);
     
     // Final Step -> convert to lowercase, uppercase or numbers based on even odd
     int cur_num = 0;
@@ -220,6 +222,7 @@ char* encrypt_message_advanced(char* message){
     int j = 0;
     int pos = 0;
     char* final_encrypted = (char *) malloc(strlen(message)*20*sizeof(char)); 
+    final_encrypted[0] = '\0';
     while(encrypted_thrice[j]){
         char current_letter = encrypted_thrice[j];
         int ascii_val = int(current_letter);
@@ -269,18 +272,19 @@ char* encrypt_message_advanced(char* message){
     }
 
     // printf("step 4: %s \n",final_encrypted);
-
     free(encrypted_thrice);
     return final_encrypted;
 }
 
 char* decrypt_message_advanced(char* encrypted){
     char* decrypted = (char *) malloc(strlen(encrypted)*20*sizeof(char)); 
+    decrypted[0] = '\0';
     // int cur_num = 0;
     // bool cur_even = true;
     int j = 0;
     int pos = 0;
     char* cur_decrypted = (char *) malloc(strlen(encrypted)*20*sizeof(char)); 
+    cur_decrypted[0] = '\0';
     while(encrypted[j]){
         char current_letter = encrypted[j];
         int ascii_val = int(current_letter);
@@ -321,14 +325,11 @@ char* decrypt_message_advanced(char* encrypted){
     }
 
     // printf("decode 1: %s\n", cur_decrypted);
-
-    char* decrypted_twice = (char *) malloc(strlen(encrypted)*20*sizeof(char)); 
-    decrypted_twice = ascii_to_num(cur_decrypted);
+    char* decrypted_twice = ascii_to_num(cur_decrypted);
     free(cur_decrypted);
 
     // printf("decode 2: %s\n", decrypted_twice);
-    char* decrypted_thrice = (char *) malloc(strlen(encrypted)*20*sizeof(char)); 
-    decrypted_thrice = ascii_to_num(decrypted_twice);
+    char* decrypted_thrice = ascii_to_num(decrypted_twice);
     free(decrypted_twice);
     // printf("decode 3: %s\n", decrypted_thrice);
 
@@ -379,7 +380,6 @@ char* decrypt_message_advanced(char* encrypted){
 
     return decrypted;
 }
-
 
 
 char* encrypt_message(char* message){
