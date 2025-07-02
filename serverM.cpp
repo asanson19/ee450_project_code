@@ -34,7 +34,6 @@ bool use_advanced_encryption = false;
 int create_and_bind_udp(int& udp_sockfd, struct sockaddr_in & udp_server_addr, struct sockaddr_in& udp_client_addr) {
     // Boot Up Server-M as UDP Client. -> Reference: "Sample UDP Client Code" from geeksforgeeks provided in Brightspace. 
 
-
     // Creating socket file descriptor
     if ((udp_sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
         perror("socket creation failed");
@@ -495,10 +494,12 @@ int process_check_wallet(char* username, bool suppress_messages=false, bool tran
     int i = 1;
     while(true){
         // Server details
+        const char *LOCALHOST = "127.0.0.1";
+
         int port_cur = 20000 + i*1000 + 99;
         udp_server_addr.sin_family = AF_INET;
         udp_server_addr.sin_port = htons(port_cur);
-        udp_server_addr.sin_addr.s_addr = INADDR_ANY;
+        udp_server_addr.sin_addr.s_addr = inet_addr(LOCALHOST);
 
         // Construct message
         char operation[MAXLINE] = "check_wallet ";

@@ -17,22 +17,24 @@ using namespace std;
 
 int create_and_connect_tcp(int& sockfd, struct sockaddr_in& serv_addr){
     
-    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0){
-        printf("\n\n Socket creation error \n\n");
+    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        perror("socket");
         return -1;
     }
 
+    memset(&serv_addr, 0, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(PORT);
-    serv_addr.sin_addr.s_addr = INADDR_ANY;
-
-
-    if (connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0){
-        printf("\n\nConnection Failed \n\n");
+    serv_addr.sin_port   = htons(PORT);  
+    
+    if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) != 1) {
+        perror("inet_pton");
         return -1;
     }
 
-    printf("The client is up and running.\n\n");
+    if (connect(sockfd, (sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
+        perror("connect");
+        return -1;
+    }
     return 0;
 }
 
