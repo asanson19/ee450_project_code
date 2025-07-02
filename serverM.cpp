@@ -494,12 +494,10 @@ int process_check_wallet(char* username, bool suppress_messages=false, bool tran
     int i = 1;
     while(true){
         // Server details
-        const char *LOCALHOST = "127.0.0.1";
-
         int port_cur = 20000 + i*1000 + 99;
         udp_server_addr.sin_family = AF_INET;
         udp_server_addr.sin_port = htons(port_cur);
-        udp_server_addr.sin_addr.s_addr = inet_addr(LOCALHOST);
+        udp_server_addr.sin_addr.s_addr = INADDR_ANY;
 
         // Construct message
         char operation[MAXLINE] = "check_wallet ";
