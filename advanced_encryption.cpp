@@ -1,5 +1,7 @@
 #include <iostream>
 #include <cstdlib> // Required for atoi
+#include <string.h>
+#include <stdio.h>
 
 using namespace std;
 

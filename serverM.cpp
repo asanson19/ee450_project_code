@@ -10,6 +10,9 @@
 #include <cstring>  // For strtok
 #include <string>
 #include <random>
+#include <errno.h>
+#include <netdb.h>
+#include <sys/wait.h>
 #include <algorithm>  // For sorting
 #include <cstdlib>    // For atoi
 #include <fstream>
