@@ -91,7 +91,6 @@ void add_transaction(char* transaction_info, int sockfd, struct sockaddr_in &cli
     char buffer[MAXLINE*10] = "";  // Initialize buffer with zeros
     snprintf(buffer,sizeof(buffer),"%d",success_code);
     sendto(sockfd, buffer, strlen(buffer), 0, (const struct sockaddr*)&cliaddr, len);
-    fclose(file);
 
 }
 
@@ -121,7 +120,6 @@ void send_all_transactions(int sockfd, struct sockaddr_in &cliaddr, socklen_t le
     }
     sendto(sockfd, buffer, strlen(buffer), 0, (const struct sockaddr*)&cliaddr, len);
     fclose(file);
-
 }
 
 int main(){

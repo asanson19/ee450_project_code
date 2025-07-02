@@ -55,9 +55,10 @@ void check_wallet(int sockfd, struct sockaddr_in &cliaddr, socklen_t len, const 
         strcat(buffer, mess);
     }
     // printf("buffer: %s\n", buffer);
-
+    
     sendto(sockfd, buffer, strlen(buffer), 0, (const struct sockaddr*)&cliaddr, len);
     printf("The Server B finished sending the response to the Main Server.\n\n");
+    fclose(file);
 
 }
 
@@ -82,6 +83,7 @@ void send_max_serial_num(int sockfd, struct sockaddr_in &cliaddr, socklen_t len)
     char buffer[MAXLINE*10] = "";  // Initialize buffer with zeros
     snprintf(buffer,sizeof(buffer),"%d",max_num);
     sendto(sockfd, buffer, strlen(buffer), 0, (const struct sockaddr*)&cliaddr, len);
+    fclose(file);
 }
 
 void add_transaction(char* transaction_info, int sockfd, struct sockaddr_in &cliaddr, socklen_t len){
@@ -127,7 +129,6 @@ void send_all_transactions(int sockfd, struct sockaddr_in &cliaddr, socklen_t le
     }
     sendto(sockfd, buffer, strlen(buffer), 0, (const struct sockaddr*)&cliaddr, len);
     fclose(file);
-
 }
 
 
