@@ -26,7 +26,7 @@ I have implemented an advanced encryption algorithm that provides enhanced secur
 - Basic Encryption: "Pduwlq"
 - Advanced Encryption: "F1Jlnpr1Vhhjlj5V5Zf3Jh5T5Xv5Hf5R59Ttfd5P5T59"
 
-**Usage:** Run servers with command-line argument to enable advanced encryption:
+**Usage:** Generate new block files and run servers with command-line argument to enable advanced encryption:
 ```bash
 ./serverM advanced
 ```
@@ -85,23 +85,27 @@ I have implemented an advanced encryption algorithm that provides enhanced secur
 ### Monitor to Main Server (TCP)
 1. **TXLIST:** `txlist`
 
+### Backend Servers to Main Server (UDP)
+1. **Transaction data:** `<serial_no> <encrypted_sender> <encrypted_receiver> <encrypted_amount>` (space-separated)
+2. **No transactions found:** `none`
+3. **Max serial number:** `<number>`
+4. **Add transaction success code:** `0` (success) or `-1` (failure)
+
 ### Main Server to Backend Servers (UDP)
 1. **Query for transactions:** `check_wallet <encrypted_username>`
 2. **Check max serial number:** `check_serial_num`
 3. **Add new transaction:** `add_transaction <serial_no> <encrypted_sender> <encrypted_receiver> <encrypted_amount>`
 4. **Get all transactions:** `txlist`
 
-### Backend Servers to Main Server (UDP)
-1. **Transaction data:** `<serial_no> <encrypted_sender> <encrypted_receiver> <encrypted_amount>` (space-separated)
-2. **No transactions found:** `none`
-3. **Max serial number:** `<number>`
-4. **Success code:** `0` (success) or `-1` (failure)
-
-### Response Formats to Client
+### Main Server Response Formats to Client
 1. **Balance response:** `check_wallet <balance>`
 2. **Transaction success:** `success <new_balance>`
 3. **Insufficient funds:** `insufficient_funds <current_balance>`
 4. **User not found:** `sender_no_exist`, `receiver_no_exist`, or `both_no_exist`
+
+### Main Server Response Format to Monitor
+1. **Status of Creation of txchain.txt:** `txlist 0` (success) or `txlist -1` (failure)
+
 
 ## Idiosyncrasies and Known Issues
 
@@ -207,7 +211,7 @@ make extra
 ```
 
 ### Advanced Encryption Algorithm Details
-The algorithm performs multiple transformations:
+The algorithm performs multiple transformations in the following order:
 
 1. **ASCII Conversion with Length Encoding:**
    - Each character is converted to ASCII value
@@ -219,10 +223,12 @@ The algorithm performs multiple transformations:
    - Process is repeated twice for additional security
 
 3. **Pattern-Based Final Encoding:**
-   - Even ASCII values: increment by 1
-   - Odd ASCII values with even position: convert to uppercase letter
-   - Odd ASCII values with odd position: convert to lowercase letter
+   - Even ASCII values: Get the number stored at that ASCII value incremented by 1
+   - Odd ASCII values after an even value: convert to uppercase letter by adding 17 and 2*position index to the ASCII value
+   - Odd ASCII values with previous value also odd: convert to lowercase letter by adding 49 and 2*position index to the ASCII value
    - Position resets every 9 characters
+
+Note: The decryption follows the same steps backwards to obtain the original text.
 
 ### Preparing Block Files for Extra Credit Testing
 When testing the extra credit implementation, you can use the `advanced_encryption` utility to prepare encrypted usernames for the block files:

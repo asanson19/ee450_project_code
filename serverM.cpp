@@ -30,8 +30,7 @@ bool use_advanced_encryption = false;
 // returns status of binding
 int create_and_bind_udp(int& udp_sockfd, struct sockaddr_in & udp_server_addr, struct sockaddr_in& udp_client_addr) {
     // Boot Up Server-M as UDP Client. -> Reference: "Sample UDP Client Code" from geeksforgeeks provided in Brightspace. 
-    // char buffer[MAXLINE];
-    // char *hello = "Hello from udp client (Server-M)";
+
 
     // Creating socket file descriptor
     if ((udp_sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
@@ -98,18 +97,31 @@ char* get_client_request(int& connfd, int sockfd, struct sockaddr_in& cli){
     }
     // read the message from client and copy it in buffer 
     bzero(buff, 1024);
-    read(connfd, buff, 1024); 
-
+    int n = read(connfd, buff, 1024); 
+    if(n == 0){
+        return nullptr;
+    }
+    buff[n] = '\0';
     return buff;
 }
 
 int send_response_to_client(int connfd, char* operation, char* message){
     // Create a new buffer 
-    char response[1024];
-    memset(response, 0, sizeof(response));
-    strcpy(response, operation);
-    strcat(response, message);
-    write(connfd, response, strlen(response)); 
+    size_t total_len = strlen(operation) + strlen(message) + 1;
+    char *buf = (char *)malloc(total_len * sizeof(char));    
+    if (buf == NULL) {
+        // handle malloc failure
+        return -1;
+    }
+    /* build the whole line safely */
+    int n = snprintf(buf, total_len, "%s%s", operation, message);
+    if (n < 0 || n >= total_len) {
+        // handle snprintf error
+        free(buf);
+        return -1;
+    }
+    write(connfd, buf, n); 
+    free(buf);
     return 0;
 }
 
@@ -118,7 +130,7 @@ int send_response_to_client(int connfd, char* operation, char* message){
     1. ASCII. American Standard Code for Information… | by codezone | Medium */
 
 char* number_to_ascii(char* numerated_message){
-    char* encrypted = (char *)  malloc(strlen(numerated_message)*4*sizeof(char)); 
+    char* encrypted = (char *)  malloc(strlen(numerated_message)*6*sizeof(char)); 
     encrypted[0] = '\0';
     int i = 0;
     while (numerated_message[i]){
@@ -141,7 +153,7 @@ char* number_to_ascii(char* numerated_message){
 }
 
 char* ascii_to_num(char* ascii_message){
-    char* decrypted = (char *)  malloc(strlen(ascii_message)*4*sizeof(char)); 
+    char* decrypted = (char *)  malloc(strlen(ascii_message)*6*sizeof(char)); 
     decrypted[0] = '\0';
     int i = 0;
     while (ascii_message[i]){
@@ -386,7 +398,7 @@ char* encrypt_message(char* message){
     if(use_advanced_encryption){
         return encrypt_message_advanced(message);
     }
-    char* encrypted = (char*)malloc(1024 * sizeof(char));
+    char* encrypted = (char*)malloc(strlen(message) * 2 * sizeof(char));
     if (encrypted == nullptr) {
         perror("Memory allocation failed");
         return message;  // Exit or handle appropriately
@@ -430,7 +442,7 @@ char* decrypt_message(char* encrypted){
     if(use_advanced_encryption){
         return decrypt_message_advanced(encrypted);
     }
-    char* decrypted = (char*)malloc(1024 * sizeof(char));
+    char* decrypted = (char*)malloc(strlen(encrypted) * 2 * sizeof(char));
     if (decrypted == nullptr) {
         perror("Memory allocation failed");
         return encrypted;  // Exit or handle appropriately
@@ -486,7 +498,7 @@ int process_check_wallet(char* username, bool suppress_messages=false, bool tran
         udp_server_addr.sin_addr.s_addr = INADDR_ANY;
 
         // Construct message
-        char operation[150] = "check_wallet ";
+        char operation[MAXLINE] = "check_wallet ";
         strcat(operation, encrypted_username);
 
         // Send the UDP request to the server
@@ -616,7 +628,7 @@ int send_new_transaction(int serial_num, char *sender, char *receiver, int amoun
         return -1;  //  if malloc fails
     }
     // Initialize the message to an empty string
-    message[0] = '\0';  // Or use memset(message, 0, 1024); to clear the buffer
+    message[0] = '\0';  
 
     // Concatenate sender and receiver
     strcat(message, sender);
@@ -653,7 +665,7 @@ int send_new_transaction(int serial_num, char *sender, char *receiver, int amoun
     udp_server_addr.sin_addr.s_addr = INADDR_ANY;
 
     // Construct message
-    char operation[MAXLINE] = "add_transaction ";  // FIX: Increased buffer size
+    char operation[MAXLINE] = "add_transaction ";  
     strcat(operation, final_message);
 
     // Send the UDP request to the server
@@ -804,9 +816,9 @@ int get_all_transactions() {
         // Parse each transaction line
         // Format: serial_num sender receiver amount
         char serial[100];
-        char* sender = (char*)malloc(100);
-        char* receiver = (char*)malloc(100); 
-        char* amount = (char*)malloc(100); 
+        char* sender = (char*)malloc(MAXLINE);
+        char* receiver = (char*)malloc(MAXLINE); 
+        char* amount = (char*)malloc(MAXLINE); 
         
         if (sscanf(token, "%99s %99s %99s %99s", serial, sender, receiver, amount) == 4) {
             char* decrypted_sender = decrypt_message(sender);
@@ -815,6 +827,7 @@ int get_all_transactions() {
             if (decrypted_sender != nullptr) {  // Check for NULL return
                 transaction_list.emplace_back(atoi(serial), decrypted_sender, decrypted_receiver, atoi(decrypted_amount)); 
             }
+
             else {
                 free(sender);
                 free(receiver);
@@ -850,7 +863,7 @@ int main(int argc, char* argv[]){
         b). Connect client to the main server (Server-M). -> Connection Type: TCP
         c). Connect monitor to the main server (Server-M). -> Connection Type: TCP
     */
-
+    srand(time(nullptr));
     if (argc == 1){
         printf("No arguments, using character shifting protocols\n\n");
     }else if (argc == 2){
@@ -918,12 +931,12 @@ int main(int argc, char* argv[]){
                     // Handle check_wallet operation
                     char* username = strtok(nullptr, " ");  // Get the next token (username)
                     if (username != NULL) {
-                        printf("The main server received input=%s from the client using TCP over %d\n\n", username, PORT_CLIENT);
+                        printf("The main server received input=\"%s\" from the client using TCP over %d\n\n", username, PORT_CLIENT);
                         int balance = process_check_wallet(username);
-                        char operation[1024] = "check_wallet ";
+                        char operation_return[1024] = "check_wallet ";
                         char message[100];
                         snprintf(message, 100, "%d", balance);
-                        send_response_to_client(connfd, operation, message);
+                        send_response_to_client(connfd, operation_return, message);
                         printf("The main server sent the current balance to the client.\n\n");
                     }
                 } else if (operation != NULL) {
@@ -949,11 +962,14 @@ int main(int argc, char* argv[]){
          Transaction list operation
         */
         if (FD_ISSET(tcp_mt_socket_fd, &readfds)) {
+
+            // Accepting connection
             struct sockaddr_in cli_monitor;
             socklen_t len_monitor = sizeof(cli_monitor);
             int connfd_monitor = accept(tcp_mt_socket_fd, (sockaddr*)&cli_monitor, &len_monitor); 
             if (connfd_monitor < 0) continue;
 
+            // Get the monitor
             char* message_monitor = get_client_request(connfd_monitor, tcp_mt_socket_fd, cli_monitor);
             if (message_monitor == NULL) {
                 close(connfd_monitor);
@@ -965,10 +981,9 @@ int main(int argc, char* argv[]){
             if(operation != NULL && strcmp(operation, "txlist") == 0) {
                 printf("The main server received a sorted list request from the monitor using TCP over port %d\n\n", PORT_MONITOR);
                 int success = get_all_transactions();
-                char message[100];
-                snprintf(message, 100, "%d", success);
+                char message[4];  
+                snprintf(message, sizeof(message), " %d", success); 
                 send_response_to_client(connfd_monitor, operation, message);
-
             }else{
                 printf("Invalid operation received from monitor\n");
             }

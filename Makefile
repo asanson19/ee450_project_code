@@ -42,31 +42,31 @@ extra: $(EXE_ADVANCED_ENCRYPTION)
 
 # Main Server
 $(EXE_SERVER_M): $(OBJ_SERVER_M)
-	$(CXX) $(OBJ_SERVER_M) -o $(EXE_SERVER_M) $(CFLAGS)
+	$(CXX) $(OBJ_SERVER_M) -o $(EXE_SERVER_M) $(CXXFLAGS)
 
 # Backend Server A
 $(EXE_SERVER_A): $(OBJ_SERVER_A)
-	$(CXX) $(OBJ_SERVER_A) -o $(EXE_SERVER_A) $(CFLAGS)
+	$(CXX) $(OBJ_SERVER_A) -o $(EXE_SERVER_A) $(CXXFLAGS)
 
 # Backend Server B
 $(EXE_SERVER_B): $(OBJ_SERVER_B)
-	$(CXX) $(OBJ_SERVER_B) -o $(EXE_SERVER_B) $(CFLAGS)
+	$(CXX) $(OBJ_SERVER_B) -o $(EXE_SERVER_B) $(CXXFLAGS)
 
 # Backend Server C
 $(EXE_SERVER_C): $(OBJ_SERVER_C)
-	$(CXX) $(OBJ_SERVER_C) -o $(EXE_SERVER_C) $(CFLAGS)
+	$(CXX) $(OBJ_SERVER_C) -o $(EXE_SERVER_C) $(CXXFLAGS)
 
 # Client
 $(EXE_CLIENT): $(OBJ_CLIENT)
-	$(CXX) $(OBJ_CLIENT) -o $(EXE_CLIENT) $(CFLAGS)
+	$(CXX) $(OBJ_CLIENT) -o $(EXE_CLIENT) $(CXXFLAGS)
 
 # Monitor
 $(EXE_MONITOR): $(OBJ_MONITOR)
-	$(CXX) $(OBJ_MONITOR) -o $(EXE_MONITOR) $(CFLAGS)
+	$(CXX) $(OBJ_MONITOR) -o $(EXE_MONITOR) $(CXXFLAGS)
 
 # Advanced encryption
 $(EXE_ADVANCED_ENCRYPTION): $(OBJ_ADVANCED_ENCRYPTION)
-	$(CXX) $(OBJ_ADVANCED_ENCRYPTION) -o $(EXE_ADVANCED_ENCRYPTION) $(CFLAGS)
+	$(CXX) $(OBJ_ADVANCED_ENCRYPTION) -o $(EXE_ADVANCED_ENCRYPTION) $(CXXFLAGS)
 
 # Clean up object files and Executables
 clean:
@@ -75,7 +75,3 @@ clean:
 # Rebuild the project
 rebuild: clean all
 
-
-# Run the servers and client/monitor for testing 
-run: $(EXE_SERVER_M) $(EXE_SERVER_A) $(EXE_SERVER_B) $(EXE_SERVER_C)
-	./$(EXE_SERVER_M) & ./$(EXE_SERVER_A) & ./$(EXE_SERVER_B) & ./$(EXE_SERVER_C) & ./$(EXE_CLIENT) & ./$(EXE_MONITOR)

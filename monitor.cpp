@@ -51,8 +51,10 @@ int main(int argc, char* argv[]){
         // check if txchain.txt is generated
         
         char response[1024];
-        read(sockfd, response, 1024);
-        if(strcmp(response,"0")){
+        int n = read(sockfd, response, 1024);
+        response[n] = '\0';
+
+        if(strcmp(response,"txlist 0") == 0){
             printf("Successfully received a sorted list of transactions from the main server.\n");
         }else{
             printf("Something went wrong.\n");

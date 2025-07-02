@@ -4,7 +4,7 @@
 using namespace std;
 
 char* number_to_ascii(char* numerated_message){
-    char* encrypted = (char *)  malloc(strlen(numerated_message)*4*sizeof(char)); 
+    char* encrypted = (char *)  malloc(strlen(numerated_message)*6*sizeof(char)); 
     encrypted[0] = '\0';
     int i = 0;
     while (numerated_message[i]){
@@ -27,7 +27,7 @@ char* number_to_ascii(char* numerated_message){
 }
 
 char* ascii_to_num(char* ascii_message){
-    char* decrypted = (char *)  malloc(strlen(ascii_message)*4*sizeof(char)); 
+    char* decrypted = (char *)  malloc(strlen(ascii_message)*6*sizeof(char)); 
     decrypted[0] = '\0';
     int i = 0;
     while (ascii_message[i]){
@@ -266,7 +266,6 @@ char* decrypt_message_advanced(char* encrypted){
 
     return decrypted;
 }
-
 
 
 int main(int argc, char** argv){

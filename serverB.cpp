@@ -23,7 +23,7 @@
 
 
 void check_wallet(int sockfd, struct sockaddr_in &cliaddr, socklen_t len, const char* username){
-    printf("The ServerB received a request from the Main Server.\n\n"); 
+    printf("The Server B received a request from the Main Server.\n\n"); 
     // Open the block1.txt file to check transactions
     FILE* file = fopen(BLOCK_FILE, "r");
     if (file == nullptr) {
@@ -57,7 +57,7 @@ void check_wallet(int sockfd, struct sockaddr_in &cliaddr, socklen_t len, const 
     // printf("buffer: %s\n", buffer);
 
     sendto(sockfd, buffer, strlen(buffer), 0, (const struct sockaddr*)&cliaddr, len);
-    printf("The ServerB finished sending the response to the Main Server.\n\n");
+    printf("The Server B finished sending the response to the Main Server.\n\n");
 
 }
 
@@ -80,7 +80,7 @@ void send_max_serial_num(int sockfd, struct sockaddr_in &cliaddr, socklen_t len)
         }
     }
     char buffer[MAXLINE*10] = "";  // Initialize buffer with zeros
-    snprintf(buffer,10,"%d",max_num);
+    snprintf(buffer,sizeof(buffer),"%d",max_num);
     sendto(sockfd, buffer, strlen(buffer), 0, (const struct sockaddr*)&cliaddr, len);
 }
 
@@ -96,8 +96,9 @@ void add_transaction(char* transaction_info, int sockfd, struct sockaddr_in &cli
         fclose(file);
     }
     char buffer[MAXLINE*10] = "";  // Initialize buffer with zeros
-    snprintf(buffer,MAXLINE*10,"%d",success_code);
+    snprintf(buffer,sizeof(buffer),"%d",success_code);
     sendto(sockfd, buffer, strlen(buffer), 0, (const struct sockaddr*)&cliaddr, len);
+
 }
 
 void send_all_transactions(int sockfd, struct sockaddr_in &cliaddr, socklen_t len){
@@ -125,6 +126,8 @@ void send_all_transactions(int sockfd, struct sockaddr_in &cliaddr, socklen_t le
         strcat(buffer, mess);
     }
     sendto(sockfd, buffer, strlen(buffer), 0, (const struct sockaddr*)&cliaddr, len);
+    fclose(file);
+
 }
 
 
